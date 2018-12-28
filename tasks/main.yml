@@ -1,0 +1,31 @@
+---
+# Configuration de la coloration du bash
+
+- name: Vérification de la présence du fichier bash.bashrc.
+  stat:
+    path: /etc/bash.bashrc
+  register: color_bash_result_bashrc
+
+- name: Copie le fichier bash.bashrc s'il n'existe pas.
+  template:
+    src: bash.bashrc.j2
+    dest: /etc/bash.bashrc
+    owner: root
+    group: root
+    mode: '0644'
+  when: color_bash_result_bashrc.stat.exists == false
+
+- name: Insère la configuration pour la coloration si le fichier bash.bashrc existe.
+  lineinfile:
+    path: /etc/bash.bashrc
+    insertafter: '^# System-wide .bashrc file for interactive bash(1) shells.'
+    line: |
+
+      # Colorful Terminal
+      export LS_OPTIONS='--color=auto'
+      eval "`dircolors`"
+      alias ls='ls $LS_OPTIONS'
+      export PS1="\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;31m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]# "
+  when: color_bash_result_bashrc.stat.exists == true
+
+...
